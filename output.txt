@@ -1,0 +1,44 @@
+Name
+Address
+Phone Number
+
+Amit Kumar
+1234, XYZ Street, Sector 15, Gurgaon
+9876543210
+
+Priya Sharma
+56, ABC Lane, Koramangala, Bangalore
+9876543221
+
+John Doe
+78, M.G. Road, New Market, Chennai
+9876543232
+
+Neha Singh
+9, R.K. Enclave, Dwarka, Delhi
+9876543243
+
+Rajesh Mehta
+112, QRS Colony, Banjara Hills, Hyderabad
+9876543254
+
+Deepika Joshi
+789, Green Park, Salt Lake, Kolkata
+9876543265
+
+Vikram Reddy
+23, Park Avenue, Pune, Maharashtra
+9876543276
+
+Ankit Jain
+345, Shankar Vihar, Ahmedabad
+9876543287
+
+Rita Verma
+4321, C-D, Shivaji Nagar, Mumbai
+9876543298
+
+Jane Smith
+56, Riverside Drive, Noida
+9876543309
+
