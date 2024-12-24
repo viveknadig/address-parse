@@ -19,7 +19,7 @@ class ParseInfoPdf
         $this->spreadsheet = IOFactory::load($filePath);
         $this->sheet = $this->spreadsheet->getActiveSheet();
 
-        $this->pdf = new FPDF('L', 'mm', 'A5');//L for landscape
+        $this->pdf = new FPDF('L', 'mm', 'A5');
         $this->pdf->SetLeftMargin(0);
         $this->pdf->SetTopMargin(0);
         $this->pdf->AddPage();
@@ -46,7 +46,60 @@ class ParseInfoPdf
         }
     }
 
-    public function fullRowPdf()
+    public function singleRowPdf($rowNumber)
+    {
+        // Draw the 4 sections with borders
+        $this->pdf->Rect(0, 0, $this->partWidth, $this->partHeight);
+        $this->pdf->Rect($this->partWidth, 0, $this->partWidth, $this->partHeight);
+        $this->pdf->Rect(0, $this->partHeight, $this->partWidth, $this->partHeight);
+        $this->pdf->Rect($this->partWidth, $this->partHeight, $this->partWidth, $this->partHeight);
+
+        $startX = 10;
+        $startY = 10;
+        $rowIndex = 0;
+        $maxColumnsPerPage = 2;
+
+        // Get the specific row by its index
+        $row = $this->sheet->getRowIterator($rowNumber)->current();  // Get the row by row number
+
+        if ($row) {
+            $cellIterator = $row->getCellIterator();
+            $cellIterator->setIterateOnlyExistingCells(false);
+
+            $cellValues = [];
+            foreach ($cellIterator as $cell) {
+                $cellValues[] = $cell->getValue();
+            }
+
+            $columnIndex = $rowIndex % $maxColumnsPerPage;
+            $rowSectionIndex = floor($rowIndex / $maxColumnsPerPage);
+
+            $sectionX = ($columnIndex == 1) ? $this->partWidth : 0;
+            $sectionY = ($rowSectionIndex == 1) ? $this->partHeight : 0;
+
+            // Print the row data in the correct section
+            $this->printRowInSections($sectionX + $startX, $sectionY + $startY, $cellValues);
+
+            $rowIndex++;
+
+            // If more than 4 rows have been printed, add a new page
+            if ($rowIndex >= $maxColumnsPerPage * 2) {
+                $rowIndex = 0;
+                $this->pdf->AddPage();
+                $startY = 10;
+
+                // Redraw the sections on the new page
+                $this->pdf->Rect(0, 0, $this->partWidth, $this->partHeight);
+                $this->pdf->Rect($this->partWidth, 0, $this->partWidth, $this->partHeight);
+                $this->pdf->Rect(0, $this->partHeight, $this->partWidth, $this->partHeight);
+                $this->pdf->Rect($this->partWidth, $this->partHeight, $this->partWidth, $this->partHeight);
+            }
+        }
+
+        $this->pdf->Output('output.pdf', 'I');
+    }
+
+    public function generatePdf()
     {
         $this->pdf->Rect(0, 0, $this->partWidth, $this->partHeight);
         $this->pdf->Rect($this->partWidth, 0, $this->partWidth, $this->partHeight);
@@ -92,4 +145,5 @@ class ParseInfoPdf
         $this->pdf->Output('output.pdf', 'I');
     }
 }
+
 ?>
