@@ -97,7 +97,7 @@ class ParseInfoPdf
             }
         }
     }
-        $this->pdf->Output('output.pdf', 'I');
+        $this->pdf->Output('output.pdf', 'D');
     }
     public function singleRowPdf($rowNumber)
     {
@@ -149,11 +149,13 @@ class ParseInfoPdf
             }
         }
 
-        $this->pdf->Output('output.pdf', 'I');
+        $this->pdf->Output('output.pdf', 'D');
     }
 
     public function fullRowPdf()
     {
+
+        
         $this->pdf->Rect(0, 0, $this->partWidth, $this->partHeight);
         $this->pdf->Rect($this->partWidth, 0, $this->partWidth, $this->partHeight);
         $this->pdf->Rect(0, $this->partHeight, $this->partWidth, $this->partHeight);
@@ -195,7 +197,7 @@ class ParseInfoPdf
             }
         }
 
-        $this->pdf->Output('output.pdf', 'I');
+        $this->pdf->Output('output.pdf', 'D');
     }
 }
 
