@@ -18,38 +18,30 @@ class ParseInfoPdf
     {
         $this->spreadsheet = IOFactory::load($filePath);
         $this->sheet = $this->spreadsheet->getActiveSheet();
-
         $this->pdf = new FPDF('L', 'mm', 'A3');
-        $this->pdf->SetLeftMargin(10);
-        $this->pdf->SetTopMargin(10);
-        $this->pdf->SetRightMargin(10);
+        $this->pdf->SetLeftMargin(5);
+        $this->pdf->SetTopMargin(5);
+        $this->pdf->SetRightMargin(0);
         $this->pdf->SetAutoPageBreak(true, 10);
         $this->pdf->AddPage();
-        $this->pdf->SetFont('Arial', '', 12);
-
+        $this->pdf->SetFont('Arial', '', 8);
         $this->pageWidth = 420;
         $this->pageHeight = 297;
-        $this->partWidth = $this->pageWidth / 3;
-        $this->partHeight = $this->pageHeight / 4;
+        $this->partWidth = $this->pageWidth / 4;
+        $this->partHeight = $this->pageHeight / 7;
     }
 
     private function printRowInSections($x, $y, $cells)
     {
-        $lineHeight = 12;
+        $lineHeight = 5;
         $maxLinesPerSection = floor($this->partHeight / $lineHeight);
         $currentY = $y;
 
         foreach ($cells as $index => $cell) {
-            if ($index == 1) {
-                $cell = str_replace(["\r", "\n"], ' ', $cell);
-                $this->pdf->SetXY($x, $currentY);
-                $this->pdf->MultiCell($this->partWidth - 10, $lineHeight, $cell, 0, 'L');
-                $currentY = $this->pdf->GetY();
-            } else {
-                $this->pdf->SetXY($x, $currentY);
-                $this->pdf->MultiCell($this->partWidth - 10, $lineHeight, $cell, 0, 'L');
-                $currentY = $this->pdf->GetY() + 5;
-            }
+            $cell = str_replace(["\r", "\n"], ' ', $cell);
+            $this->pdf->SetXY($x, $currentY);
+            $this->pdf->MultiCell($this->partWidth - 10, $lineHeight, $cell, 0, 'L');
+            $currentY = $this->pdf->GetY();
         }
     }
 
@@ -63,32 +55,37 @@ class ParseInfoPdf
             foreach ($cellIterator as $cell) {
                 $cellValues[] = $cell->getValue();
             }
-
             $firstRowHeaders = ['name', 'address', 'phone number'];
             $headerCheck = array_map('strtolower', $cellValues);
             if (array_intersect($firstRowHeaders, $headerCheck)) {
-                return true; // Skip this row
+                return true;
             }
         }
-        return false; // Proceed with row
+        return false;
     }
 
     public function rangeRowPdf($startingRow, $endingRow)
     {
-        for ($i = 0; $i < 3; $i++) {
-            for ($j = 0; $j < 4; $j++) {
+        $topMargin = 5;
+        $leftMargin = 5;
+        $startX = $leftMargin;
+        $startY = $topMargin;
+
+        for ($i = 0; $i < 4; $i++) {
+            for ($j = 0; $j < 7; $j++) {
                 $this->pdf->Rect($i * $this->partWidth, $j * $this->partHeight, $this->partWidth, $this->partHeight);
             }
         }
 
-        $startX = 10;
-        $startY = 10;
         $rowIndex = 0;
-        $maxColumnsPerPage = 3;
+        $maxColumnsPerPage = 4;
+        $totalRows = $endingRow - $startingRow + 1;
+        $rowsPrinted = 0;
+        $highestRow = $this->sheet->getHighestRow();
 
         for ($rowNum = $startingRow; $rowNum <= $endingRow; $rowNum++) {
             if ($this->skipFirstRowIfHeader($rowNum)) {
-                continue; // Skip the first row if it contains 'name', 'address', or 'phone number'
+                continue;
             }
 
             $row = $this->sheet->getRowIterator($rowNum)->current();
@@ -113,13 +110,15 @@ class ParseInfoPdf
                 $this->printRowInSections($sectionX + $startX, $sectionY + $startY, $cellValues);
 
                 $rowIndex++;
+                $rowsPrinted++;
 
-                if ($rowIndex >= 12) {
+                if ($rowsPrinted >= 28 && $rowNum < $highestRow) {
                     $rowIndex = 0;
+                    $rowsPrinted = 0;
                     $this->pdf->AddPage();
 
-                    for ($i = 0; $i < 3; $i++) {
-                        for ($j = 0; $j < 4; $j++) {
+                    for ($i = 0; $i < 4; $i++) {
+                        for ($j = 0; $j < 7; $j++) {
                             $this->pdf->Rect($i * $this->partWidth, $j * $this->partHeight, $this->partWidth, $this->partHeight);
                         }
                     }
@@ -132,19 +131,22 @@ class ParseInfoPdf
 
     public function singleRowPdf($rowNumber)
     {
-        for ($i = 0; $i < 3; $i++) {
-            for ($j = 0; $j < 4; $j++) {
+        $topMargin = 5;
+        $leftMargin = 5;
+        $startX = $leftMargin;
+        $startY = $topMargin;
+
+        for ($i = 0; $i < 4; $i++) {
+            for ($j = 0; $j < 7; $j++) {
                 $this->pdf->Rect($i * $this->partWidth, $j * $this->partHeight, $this->partWidth, $this->partHeight);
             }
         }
 
-        $startX = 10;
-        $startY = 10;
         $rowIndex = 0;
-        $maxColumnsPerPage = 3;
+        $maxColumnsPerPage = 4;
 
         if ($this->skipFirstRowIfHeader($rowNumber)) {
-            return; // Skip the first row if it contains 'name', 'address', or 'phone number'
+            return;
         }
 
         $row = $this->sheet->getRowIterator($rowNumber)->current();
@@ -169,17 +171,6 @@ class ParseInfoPdf
             $this->printRowInSections($sectionX + $startX, $sectionY + $startY, $cellValues);
 
             $rowIndex++;
-
-            if ($rowIndex >= 12) {
-                $rowIndex = 0;
-                $this->pdf->AddPage();
-
-                for ($i = 0; $i < 3; $i++) {
-                    for ($j = 0; $j < 4; $j++) {
-                        $this->pdf->Rect($i * $this->partWidth, $j * $this->partHeight, $this->partWidth, $this->partHeight);
-                    }
-                }
-            }
         }
 
         $this->pdf->Output('output.pdf', 'D');
@@ -187,21 +178,26 @@ class ParseInfoPdf
 
     public function fullRowPdf()
     {
-        for ($i = 0; $i < 3; $i++) {
-            for ($j = 0; $j < 4; $j++) {
+        $topMargin = 5;
+        $leftMargin = 5;
+        $startX = $leftMargin;
+        $startY = $topMargin;
+
+        for ($i = 0; $i < 4; $i++) {
+            for ($j = 0; $j < 7; $j++) {
                 $this->pdf->Rect($i * $this->partWidth, $j * $this->partHeight, $this->partWidth, $this->partHeight);
             }
         }
 
-        $startX = 10;
-        $startY = 10;
         $rowIndex = 0;
-        $maxColumnsPerPage = 3;
+        $maxColumnsPerPage = 4;
+        $highestRow = $this->sheet->getHighestRow();
+        $rowsPrinted = 0;
 
         foreach ($this->sheet->getRowIterator() as $row) {
             $rowNum = $row->getRowIndex();
             if ($this->skipFirstRowIfHeader($rowNum)) {
-                continue; // Skip the first row if it contains 'name', 'address', or 'phone number'
+                continue;
             }
 
             $cellIterator = $row->getCellIterator();
@@ -223,13 +219,15 @@ class ParseInfoPdf
             $this->printRowInSections($sectionX + $startX, $sectionY + $startY, $cellValues);
 
             $rowIndex++;
+            $rowsPrinted++;
 
-            if ($rowIndex >= 12) {
+            if ($rowsPrinted >= 28 && $rowNum < $highestRow) {
                 $rowIndex = 0;
+                $rowsPrinted = 0;
                 $this->pdf->AddPage();
 
-                for ($i = 0; $i < 3; $i++) {
-                    for ($j = 0; $j < 4; $j++) {
+                for ($i = 0; $i < 4; $i++) {
+                    for ($j = 0; $j < 7; $j++) {
                         $this->pdf->Rect($i * $this->partWidth, $j * $this->partHeight, $this->partWidth, $this->partHeight);
                     }
                 }
@@ -239,5 +237,3 @@ class ParseInfoPdf
         $this->pdf->Output('output.pdf', 'D');
     }
 }
-?>
-
